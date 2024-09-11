@@ -32,6 +32,7 @@
         // Formun submit edildiğinde API'ye veri gönderme işlemi
         document.getElementById('meetingForm').addEventListener('submit', function(event) {
             event.preventDefault();
+            const apiUrl = window.location.origin;
 
             const title = document.getElementById('title').value;
             const date = document.getElementById('date').value;
@@ -48,20 +49,22 @@
             };
 
             // API'ye POST isteği gönderme
-            fetch('https://localhost:5001/api/meetings/create', {
+            fetch(`${apiUrl}/api/meetings/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(meetingData)
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Toplantı başarıyla kaydedildi:', data);
-            })
-            .catch(error => {
-                console.error('Hata:', error);
-            });
+                .then(response => response.json())  // Yanıtın JSON formatında geldiğini varsayıyoruz
+                .then(data => {
+                    console.log('Toplantı başarıyla kaydedildi:', data);
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                });
+
+
         });
     </script>
 

@@ -19,18 +19,24 @@ namespace MeetingOrganizer.Repositories.Concrete
         {
             using (var connection = new MySqlConnection(_connectionString))
             {
+                // DTO'dan verileri alıyoruz
+                var startTimeSpan = TimeSpan.Parse(meetingDto.StartTime); // String to TimeSpan dönüşümü
+                var endTimeSpan = TimeSpan.Parse(meetingDto.EndTime);     // String to TimeSpan dönüşümü
+
+                // Veritabanına kaydetme işlemi
                 string insertMeetingSql = "INSERT INTO Meetings (title, date, start_time, end_time) VALUES (@Title, @Date, @StartTime, @EndTime)";
-                connection.Execute(insertMeetingSql, new { meetingDto.Title, meetingDto.Date, meetingDto.StartTime, meetingDto.EndTime });
+                connection.Execute(insertMeetingSql, new { meetingDto.Title, meetingDto.Date, StartTime = startTimeSpan, EndTime = endTimeSpan });
 
                 int meetingId = connection.QuerySingle<int>("SELECT LAST_INSERT_ID()");
 
+                // Katılımcıları ekleme
                 foreach (var participant in meetingDto.Participants)
                 {
                     int participantId = connection.QuerySingleOrDefault<int>("SELECT participant_id FROM Participants WHERE name = @Name", new { Name = participant });
 
                     if (participantId == 0)
                     {
-                        string insertParticipantSql = "INSERT INTO Participants (name, email) VALUES (@Name, 'dummy@example.com')";
+                        string insertParticipantSql = "INSERT INTO Participants (name) VALUES (@Name)";
                         connection.Execute(insertParticipantSql, new { Name = participant });
                         participantId = connection.QuerySingle<int>("SELECT LAST_INSERT_ID()");
                     }
@@ -40,6 +46,8 @@ namespace MeetingOrganizer.Repositories.Concrete
                 }
             }
         }
+
+
 
         public IEnumerable<Meeting> GetAllMeetings()
         {
@@ -73,7 +81,7 @@ namespace MeetingOrganizer.Repositories.Concrete
 
                     if (participantId == 0)
                     {
-                        string insertParticipantSql = "INSERT INTO Participants (name, email) VALUES (@Name, 'dummy@example.com')";
+                        string insertParticipantSql = "INSERT INTO Participants (name) VALUES (@Name)";
                         connection.Execute(insertParticipantSql, new { Name = participant });
                         participantId = connection.QuerySingle<int>("SELECT LAST_INSERT_ID()");
                     }

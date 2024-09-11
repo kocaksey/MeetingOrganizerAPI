@@ -2,10 +2,10 @@
 {
     public class MeetingDto
     {
-        public string Title { get; set; }          // Toplantı konusu
-        public DateTime Date { get; set; }         // Toplantı tarihi
-        public TimeSpan StartTime { get; set; }    // Başlangıç saati
-        public TimeSpan EndTime { get; set; }      // Bitiş saati
-        public List<string> Participants { get; set; }  // Katılımcılar listesi
+        public string Title { get; set; }
+        public DateTime Date { get; set; }
+        public string StartTime { get; set; }  // TimeSpan yerine string
+        public string EndTime { get; set; }    // TimeSpan yerine string
+        public List<string> Participants { get; set; }
     }
 }

@@ -33,6 +33,8 @@ namespace MeetingOrganizer
             });
 
             var app = builder.Build();
+            app.UseCors("AllowAll");
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -44,7 +46,6 @@ namespace MeetingOrganizer
             app.UseHttpsRedirection();
 
             // CORS Middleware'ini ekleyin
-            app.UseCors("AllowAll");
 
             app.UseAuthorization();
 

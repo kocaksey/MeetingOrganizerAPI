@@ -18,9 +18,26 @@ namespace MeetingOrganizer.Controllers
         [HttpPost("create")]
         public IActionResult CreateMeeting([FromBody] MeetingDto meetingDto)
         {
-            _meetingRepository.CreateMeeting(meetingDto);
-            return Ok(new { message = "Toplantı başarıyla kaydedildi." });
+            try
+            {
+                // String olan startTime ve endTime'ı TimeSpan'e çeviriyoruz
+                var startTimeSpan = TimeSpan.Parse(meetingDto.StartTime);
+                var endTimeSpan = TimeSpan.Parse(meetingDto.EndTime);
+
+                // Zaten DTO'da tüm veriler var, repository'ye DTO'yu gönderiyoruz
+                _meetingRepository.CreateMeeting(meetingDto);
+
+                return Ok(new { message = "Toplantı başarıyla kaydedildi." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Bir hata oluştu", error = ex.Message });
+            }
         }
+
+
+
+
 
         [HttpGet("list")]
         public IActionResult GetMeetings()
