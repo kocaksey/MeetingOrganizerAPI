@@ -20,11 +20,7 @@ namespace MeetingOrganizer.Controllers
         {
             try
             {
-                // String olan startTime ve endTime'ı TimeSpan'e çeviriyoruz
-                var startTimeSpan = TimeSpan.Parse(meetingDto.StartTime);
-                var endTimeSpan = TimeSpan.Parse(meetingDto.EndTime);
-
-                // Zaten DTO'da tüm veriler var, repository'ye DTO'yu gönderiyoruz
+                // StartTime ve EndTime zaten TimeSpan olarak DTO'da varsa, direkt kullanabilirsiniz
                 _meetingRepository.CreateMeeting(meetingDto);
 
                 return Ok(new { message = "Toplantı başarıyla kaydedildi." });
@@ -34,6 +30,7 @@ namespace MeetingOrganizer.Controllers
                 return BadRequest(new { message = "Bir hata oluştu", error = ex.Message });
             }
         }
+
 
 
 

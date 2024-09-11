@@ -14,14 +14,49 @@ namespace MeetingOrganizer.Repositories.Concrete
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
+        public IEnumerable<MeetingDto> GetAllMeetings()
+        {
+            var query = "SELECT m.meeting_id AS MeetingId, m.title, m.date, m.start_time AS StartTime, m.end_time AS EndTime, p.name " +
+                        "FROM Meetings m " +
+                        "JOIN MeetingParticipants mp ON m.meeting_id = mp.meeting_id " +
+                        "JOIN Participants p ON mp.participant_id = p.participant_id";
+
+            using (var connection = new MySqlConnection(_connectionString))
+            {
+                var meetingDict = new Dictionary<int, MeetingDto>();
+
+                connection.Query<MeetingDto, string, MeetingDto>(
+                    query,
+                    (meeting, participant) =>
+                    {
+                        if (!meetingDict.TryGetValue(meeting.MeetingId, out var currentMeeting))
+                        {
+                            currentMeeting = meeting;
+                            currentMeeting.Participants = new List<string>();
+                            meetingDict[meeting.MeetingId] = currentMeeting;
+                        }
+
+                        currentMeeting.Participants.Add(participant);
+                        return currentMeeting;
+                    },
+                    splitOn: "name"  // Katılımcıların name sütununa göre ayırıyoruz
+                );
+
+                return meetingDict.Values.ToList();
+            }
+        }
+
+
+
+
 
         public void CreateMeeting(MeetingDto meetingDto)
         {
             using (var connection = new MySqlConnection(_connectionString))
             {
-                // DTO'dan verileri alıyoruz
-                var startTimeSpan = TimeSpan.Parse(meetingDto.StartTime); // String to TimeSpan dönüşümü
-                var endTimeSpan = TimeSpan.Parse(meetingDto.EndTime);     // String to TimeSpan dönüşümü
+                // DTO'dan verileri alıyoruz, TimeSpan'e dönüştürmeye gerek yok
+                TimeSpan startTimeSpan = meetingDto.StartTime;
+                TimeSpan endTimeSpan = meetingDto.EndTime;
 
                 // Veritabanına kaydetme işlemi
                 string insertMeetingSql = "INSERT INTO Meetings (title, date, start_time, end_time) VALUES (@Title, @Date, @StartTime, @EndTime)";
@@ -49,13 +84,8 @@ namespace MeetingOrganizer.Repositories.Concrete
 
 
 
-        public IEnumerable<Meeting> GetAllMeetings()
-        {
-            using (var connection = new MySqlConnection(_connectionString))
-            {
-                return connection.Query<Meeting>("SELECT * FROM Meetings");
-            }
-        }
+
+
 
         public Meeting GetMeetingById(int meetingId)
         {
