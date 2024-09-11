@@ -1,0 +1,69 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toplantı Kayıt Formu</title>
+</head>
+<body>
+
+    <h2>Toplantı Kayıt Formu</h2>
+
+    <form id="meetingForm">
+        <label for="title">Toplantı Konusu:</label>
+        <input type="text" id="title" name="title" required><br><br>
+
+        <label for="date">Tarih:</label>
+        <input type="date" id="date" name="date" required><br><br>
+
+        <label for="start_time">Başlangıç Saati:</label>
+        <input type="time" id="start_time" name="start_time" required><br><br>
+
+        <label for="end_time">Bitiş Saati:</label>
+        <input type="time" id="end_time" name="end_time" required><br><br>
+
+        <label for="participants">Katılımcılar (Virgülle Ayırarak):</label>
+        <input type="text" id="participants" name="participants" placeholder="Örn: Ali, Ayşe" required><br><br>
+
+        <button type="submit">Toplantıyı Kaydet</button>
+    </form>
+
+    <script>
+        // Formun submit edildiğinde API'ye veri gönderme işlemi
+        document.getElementById('meetingForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const date = document.getElementById('date').value;
+            const startTime = document.getElementById('start_time').value;
+            const endTime = document.getElementById('end_time').value;
+            const participants = document.getElementById('participants').value.split(',').map(p => p.trim());
+
+            const meetingData = {
+                title: title,
+                date: date,
+                startTime: startTime,
+                endTime: endTime,
+                participants: participants
+            };
+
+            // API'ye POST isteği gönderme
+            fetch('https://localhost:5001/api/meetings/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(meetingData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Toplantı başarıyla kaydedildi:', data);
+            })
+            .catch(error => {
+                console.error('Hata:', error);
+            });
+        });
+    </script>
+
+</body>
+</html>
