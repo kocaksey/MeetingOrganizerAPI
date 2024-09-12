@@ -11,7 +11,7 @@ Date Validation: Prevents the selection of past dates for new meetings.
 Technologies Used
 Frontend: HTML, Bootstrap, and JavaScript
 Backend: ASP.NET Core
-Database: MySQL (or SQL Server)
+Database: MySQL 
 API: RESTful services for managing meetings and participants
 
 
