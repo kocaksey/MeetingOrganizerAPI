@@ -9,21 +9,16 @@ namespace MeetingOrganizer
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
 
-            // Repository ve diðer servisleri DI'a ekleyin
             builder.Services.AddScoped<IMeetingRepository, MeetingRepository>();
 
-            // Veritabaný baðlantý zincirini almak için konfigürasyonu kullanýn
             builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
             builder.Services.AddControllers();
 
-            // Swagger ve API belgeleri
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            // CORS yapýlandýrmasý
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll",
@@ -36,7 +31,6 @@ namespace MeetingOrganizer
             app.UseCors("AllowAll");
 
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -45,7 +39,6 @@ namespace MeetingOrganizer
 
             app.UseHttpsRedirection();
 
-            // CORS Middleware'ini ekleyin
 
             app.UseAuthorization();
 
