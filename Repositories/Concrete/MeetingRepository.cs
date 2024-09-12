@@ -39,32 +39,24 @@ namespace MeetingOrganizer.Repositories.Concrete
                         currentMeeting.Participants.Add(participant);
                         return currentMeeting;
                     },
-                    splitOn: "name"  // Katılımcıların name sütununa göre ayırıyoruz
+                    splitOn: "name"  
                 );
 
                 return meetingDict.Values.ToList();
             }
         }
-
-
-
-
-
         public void CreateMeeting(MeetingDto meetingDto)
         {
             using (var connection = new MySqlConnection(_connectionString))
             {
-                // DTO'dan verileri alıyoruz, TimeSpan'e dönüştürmeye gerek yok
                 TimeSpan startTimeSpan = meetingDto.StartTime;
                 TimeSpan endTimeSpan = meetingDto.EndTime;
 
-                // Veritabanına kaydetme işlemi
                 string insertMeetingSql = "INSERT INTO Meetings (title, date, start_time, end_time) VALUES (@Title, @Date, @StartTime, @EndTime)";
                 connection.Execute(insertMeetingSql, new { meetingDto.Title, meetingDto.Date, StartTime = startTimeSpan, EndTime = endTimeSpan });
 
                 int meetingId = connection.QuerySingle<int>("SELECT LAST_INSERT_ID()");
 
-                // Katılımcıları ekleme
                 foreach (var participant in meetingDto.Participants)
                 {
                     int participantId = connection.QuerySingleOrDefault<int>("SELECT participant_id FROM Participants WHERE name = @Name", new { Name = participant });
@@ -82,16 +74,43 @@ namespace MeetingOrganizer.Repositories.Concrete
             }
         }
 
-
-
-
-
-
-        public Meeting GetMeetingById(int meetingId)
+        public MeetingDto GetMeetingById(int meetingId)
         {
             using (var connection = new MySqlConnection(_connectionString))
             {
-                return connection.QuerySingleOrDefault<Meeting>("SELECT * FROM Meetings WHERE meeting_id = @MeetingId", new { MeetingId = meetingId });
+                string query = @"
+            SELECT m.meeting_id AS MeetingId, m.title, m.date, m.start_time AS StartTime, m.end_time AS EndTime, 
+                   p.name AS ParticipantName
+            FROM Meetings m
+            LEFT JOIN MeetingParticipants mp ON m.meeting_id = mp.meeting_id
+            LEFT JOIN Participants p ON mp.participant_id = p.participant_id
+            WHERE m.meeting_id = @MeetingId";
+
+                var meetingDict = new Dictionary<int, MeetingDto>();
+
+                var meetings = connection.Query<MeetingDto, string, MeetingDto>(
+                    query,
+                    (meeting, participantName) =>
+                    {
+                        if (!meetingDict.TryGetValue(meeting.MeetingId, out var currentMeeting))
+                        {
+                            currentMeeting = meeting;
+                            currentMeeting.Participants = new List<string>();
+                            meetingDict[meeting.MeetingId] = currentMeeting;
+                        }
+
+                        if (!string.IsNullOrEmpty(participantName))
+                        {
+                            currentMeeting.Participants.Add(participantName);
+                        }
+
+                        return currentMeeting;
+                    },
+                    new { MeetingId = meetingId },
+                    splitOn: "ParticipantName"
+                );
+
+                return meetings.FirstOrDefault();
             }
         }
 
@@ -99,8 +118,11 @@ namespace MeetingOrganizer.Repositories.Concrete
         {
             using (var connection = new MySqlConnection(_connectionString))
             {
+                TimeSpan startTimeSpan = meetingDto.StartTime;
+                TimeSpan endTimeSpan = meetingDto.EndTime;
+
                 string updateMeetingSql = "UPDATE Meetings SET title = @Title, date = @Date, start_time = @StartTime, end_time = @EndTime WHERE meeting_id = @MeetingId";
-                connection.Execute(updateMeetingSql, new { meetingDto.Title, meetingDto.Date, meetingDto.StartTime, meetingDto.EndTime, MeetingId = meetingId });
+                connection.Execute(updateMeetingSql, new { meetingDto.Title, meetingDto.Date, StartTime = startTimeSpan, EndTime = endTimeSpan, MeetingId = meetingId });
 
                 string deleteParticipantsSql = "DELETE FROM MeetingParticipants WHERE meeting_id = @MeetingId";
                 connection.Execute(deleteParticipantsSql, new { MeetingId = meetingId });

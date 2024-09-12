@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Toplantı Yönetim Paneli</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
 </head>
 <body>
     <div class="container mt-5">
-        <!-- Toplantı Listesi Üstte -->
         <h2 class="mb-4">Toplantı Listesi</h2>
+        <button class="btn btn-success mb-3" id="newMeetingButton">Yeni Toplantı</button>
+
         <table class="table table-bordered table-striped mt-3">
             <thead>
                 <tr>
@@ -23,268 +24,49 @@
                 </tr>
             </thead>
             <tbody id="meetingsTableBody">
-                <!-- Toplantılar dinamik olarak buraya eklenecek -->
             </tbody>
         </table>
 
-        <!-- Toplantı Kayıt Formu Altta -->
-        <h2 class="mt-5">Toplantı Kayıt Formu</h2>
-        <form id="meetingForm">
-            <!-- Form yapısı burada olacak -->
-            <div class="mb-3">
-                <label for="title" class="form-label">Toplantı Konusu:</label>
-                <input type="text" class="form-control" id="title" name="title" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="date" class="form-label">Tarih:</label>
-                <input type="date" class="form-control" id="date" name="date" required>
-            </div>
-
-            <div class="row mb-3">
-                <div class="col">
-                    <label for="start_time" class="form-label">Başlangıç Saati:</label>
-                    <input type="time" class="form-control" id="start_time" name="start_time" required>
+        <div id="meetingFormContainer" style="display: none;">
+            <h2 id="formTitle" class="mt-5">Toplantı Oluştur</h2>
+            <form id="meetingForm">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Toplantı Konusu:</label>
+                    <input type="text" class="form-control" id="title" name="title" required>
                 </div>
-                <div class="col">
-                    <label for="end_time" class="form-label">Bitiş Saati:</label>
-                    <input type="time" class="form-control" id="end_time" name="end_time" required>
+                <div class="mb-3">
+                    <label for="date" class="form-label">Tarih:</label>
+                    <input type="date" class="form-control" id="date" name="date" required>
                 </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="participants" class="form-label">Katılımcılar:</label>
-                <div id="participantsContainer">
-                    <div class="input-group mb-2">
-                        <input type="text" class="form-control participant" placeholder="Katılımcı Adı">
-                        <button type="button" class="btn btn-danger remove-participant">Sil</button>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="start_time" class="form-label">Başlangıç Saati:</label>
+                        <input type="time" class="form-control" id="start_time" name="start_time" required>
+                    </div>
+                    <div class="col">
+                        <label for="end_time" class="form-label">Bitiş Saati:</label>
+                        <input type="time" class="form-control" id="end_time" name="end_time" required>
                     </div>
                 </div>
-                <button type="button" id="addParticipant" class="btn btn-secondary mb-3">Katılımcı Ekle</button>
-            </div>
+                <div class="mb-3">
+                    <label for="participants" class="form-label">Katılımcılar:</label>
+                    <div id="participantsContainer">
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control participant" placeholder="Katılımcı Adı">
+                            <button type="button" class="btn btn-danger remove-participant">Sil</button>
+                        </div>
+                    </div>
+                    <button type="button" id="addParticipant" class="btn btn-success mb-3">Katılımcı Ekle</button>
 
-            <button type="submit" class="btn btn-primary">Toplantıyı Kaydet</button>
-        </form>
+                </div>
+                <button type="submit" class="btn btn-primary" id="formSubmitButton">Toplantıyı Kaydet</button>
+                <button type="button" class="btn btn-light" id="cancelButton">Vazgeç</button>
+            </form>
+        </div>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/script.js"></script>
 
-    <script>
-        const apiUrl = window.location.origin;
-
-        // Toplantıları API'den çekip tabloya ekleyelim
-        // Toplantıları API'den çekip tabloya ekleyelim
-        function loadMeetings() {
-            fetch(`${apiUrl}/api/meetings/list`)
-                .then(response => response.json())
-                .then(data => {
-                    const meetingsTableBody = document.getElementById('meetingsTableBody');
-                    meetingsTableBody.innerHTML = '';  // Önce tabloyu temizle
-                    data.forEach(meeting => {
-                        const row = document.createElement('tr');
-
-                        // Tarih ve saat verilerini kontrol ederek, uygun şekilde yazdırıyoruz
-                        const meetingDate = new Date(meeting.date).toLocaleDateString();
-
-                        // Eğer backend'den TimeSpan geliyorsa doğrudan string'e çevirip gösterelim
-                        const startTime = meeting.startTime ? meeting.startTime : 'Belirtilmemiş';
-                        const endTime = meeting.endTime ? meeting.endTime : 'Belirtilmemiş';
-
-                        row.innerHTML = `
-                        <td>${meeting.title}</td>
-                        <td>${meetingDate}</td>
-                        <td>${startTime}</td>
-                        <td>${endTime}</td>
-                        <td>${(meeting.participants && meeting.participants.length > 0) ? meeting.participants.join(', ') : 'Katılımcı yok'}</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm" onclick="editMeeting(${meeting.meetingId})">Düzenle</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteMeeting(${meeting.meetingId})">Sil</button>
-                        </td>
-                    `;
-                        meetingsTableBody.appendChild(row);
-                    });
-                })
-                .catch(error => {
-                    console.error('Hata:', error);
-                });
-        }
-
-        // Toplantı formu gönderme ve yeni toplantı oluşturma
-        document.getElementById('meetingForm').addEventListener('submit', function (event) {
-            event.preventDefault();
-
-            // Formdaki verileri al
-            const title = document.getElementById('title').value;
-            const date = document.getElementById('date').value;
-            const startTime = document.getElementById('start_time').value;
-            const endTime = document.getElementById('end_time').value;
-            const participants = Array.from(document.querySelectorAll('.participant'))
-                .map(input => input.value.trim())
-                .filter(p => p);
-
-            const meetingData = {
-                title: title,
-                date: date,
-                startTime: startTime,  // start_time doğru biçimde TimeSpan olarak backend'e gönderilecek
-                endTime: endTime,      // end_time doğru biçimde TimeSpan olarak backend'e gönderilecek
-                participants: participants
-            };
-
-            // POST isteği yapıyoruz, veri oluşturuluyor.
-            fetch(`${apiUrl}/api/meetings/create`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(meetingData)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Toplantı başarıyla kaydedildi:', data);
-                    loadMeetings(); // Form gönderildikten sonra toplantıları tekrar yükle
-                })
-                .catch(error => {
-                    console.error('Hata:', error);
-                });
-        });
-
-
-        // Toplantı güncelleme fonksiyonu
-        function editMeeting(id) {
-            fetch(`${apiUrl}/api/meetings/${id}`)
-                .then(response => response.json())
-                .then(meeting => {
-                    // Formu doldur
-                    document.getElementById('title').value = meeting.title;
-                    document.getElementById('date').value = meeting.date.split('T')[0];
-                    document.getElementById('start_time').value = meeting.startTime;
-                    document.getElementById('end_time').value = meeting.endTime;
-
-                    const participantsContainer = document.getElementById('participantsContainer');
-                    participantsContainer.innerHTML = ''; // Önce katılımcıları temizle
-                    meeting.participants.forEach(participant => {
-                        const participantInputGroup = document.createElement('div');
-                        participantInputGroup.className = 'input-group mb-2';
-                        participantInputGroup.innerHTML = `
-                                    <input type="text" class="form-control participant" value="${participant}">
-                                    <button type="button" class="btn btn-danger remove-participant">Sil</button>
-                                `;
-                        participantsContainer.appendChild(participantInputGroup);
-                    });
-
-                    // Kaydet butonuna tıklandığında formu güncelleme modunda kaydet
-                    document.getElementById('meetingForm').onsubmit = function (event) {
-                        event.preventDefault();
-                        const title = document.getElementById('title').value;
-                        const date = document.getElementById('date').value;
-                        const startTime = document.getElementById('start_time').value;
-                        const endTime = document.getElementById('end_time').value;
-                        const participants = Array.from(document.querySelectorAll('.participant')).map(input => input.value.trim()).filter(p => p);
-
-                        const meetingData = {
-                            title: title,
-                            date: date,
-                            startTime: startTime,
-                            endTime: endTime,
-                            participants: participants
-                        };
-
-                        // Güncelleme isteği gönder
-                        fetch(`${apiUrl}/api/meetings/update/${id}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(meetingData)
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                loadMeetings();  // Toplantı listesini güncelle
-                            })
-                            .catch(error => {
-                                console.error('Hata:', error);
-                            });
-                    };
-                });
-        }
-
-        // Toplantı silme fonksiyonu
-        function deleteMeeting(id) {
-            if (confirm('Bu toplantıyı silmek istediğinize emin misiniz?')) {
-                fetch(`${apiUrl}/api/meetings/delete/${id}`, {
-                    method: 'DELETE'
-                })
-                    .then(response => {
-                        loadMeetings();  // Silindikten sonra listeyi güncelle
-                    })
-                    .catch(error => {
-                        console.error('Hata:', error);
-                    });
-            }
-        }
-
-        // Sayfa yüklendiğinde toplantıları yükle
-        document.addEventListener('DOMContentLoaded', function () {
-            loadMeetings();
-        });
-
-        // Katılımcı ekleme ve diğer scriptler burada
-        document.getElementById('addParticipant').addEventListener('click', function () {
-            const participantsContainer = document.getElementById('participantsContainer');
-            const participantInputGroup = document.createElement('div');
-            participantInputGroup.className = 'input-group mb-2';
-            participantInputGroup.innerHTML = `
-                        <input type="text" class="form-control participant" placeholder="Katılımcı Adı">
-                        <button type="button" class="btn btn-danger remove-participant">Sil</button>
-                    `;
-            participantsContainer.appendChild(participantInputGroup);
-            participantInputGroup.querySelector('.remove-participant').addEventListener('click', function () {
-                participantInputGroup.remove();
-            });
-        });
-
-        // Toplantı formu gönderme ve yeni toplantı oluşturma
-        document.getElementById('meetingForm').addEventListener('submit', function (event) {
-            event.preventDefault();
-            const formattedStartTime = meeting.startTime ? meeting.startTime : '00:00:00';
-            const formattedEndTime = meeting.endTime ? meeting.endTime : '00:00:00';
-
-            console.log(`Başlangıç: ${formattedStartTime}, Bitiş: ${formattedEndTime}`);
-
-            const title = document.getElementById('title').value;
-            const date = document.getElementById('date').value;
-            const startTime = document.getElementById('start_time').value;
-            const endTime = document.getElementById('end_time').value;
-            const participants = Array.from(document.querySelectorAll('.participant'))
-                .map(input => input.value.trim())
-                .filter(p => p);
-
-            const meetingData = {
-                title: title,
-                date: date,
-                startTime: startTime,
-                endTime: endTime,
-                participants: participants
-            };
-
-            // POST isteği yapıyoruz, veri oluşturuluyor.
-            fetch(`${apiUrl}/api/meetings/create`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(meetingData)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Toplantı başarıyla kaydedildi:', data);
-                    loadMeetings(); // Form gönderildikten sonra toplantıları tekrar yükle
-                })
-                .catch(error => {
-                    console.error('Hata:', error);
-                });
-        });
-    </script>
 </body>
 </html>

@@ -20,21 +20,19 @@ namespace MeetingOrganizer.Controllers
         {
             try
             {
-                // StartTime ve EndTime zaten TimeSpan olarak DTO'da varsa, direkt kullanabilirsiniz
-                _meetingRepository.CreateMeeting(meetingDto);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
+                _meetingRepository.CreateMeeting(meetingDto);
                 return Ok(new { message = "Toplantı başarıyla kaydedildi." });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "Bir hata oluştu", error = ex.Message });
+                return BadRequest(new { message = "Toplantı eklenirken bir hata oluştu.", error = ex.Message });
             }
         }
-
-
-
-
-
 
         [HttpGet("list")]
         public IActionResult GetMeetings()
@@ -57,6 +55,13 @@ namespace MeetingOrganizer.Controllers
         [HttpPut("update/{id}")]
         public IActionResult UpdateMeeting(int id, [FromBody] MeetingDto meetingDto)
         {
+            var meeting = _meetingRepository.GetMeetingById(id);
+            if (meeting == null)
+            {
+                return NotFound(new { message = "Toplantı bulunamadı." });
+            }
+
+            // Veritabanında güncelleme işlemi
             _meetingRepository.UpdateMeeting(id, meetingDto);
             return Ok(new { message = "Toplantı başarıyla güncellendi." });
         }
